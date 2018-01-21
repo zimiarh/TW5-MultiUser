@@ -78,56 +78,67 @@ $tw.nodeMessageHandlers.updateBase = function (data) {
   }
 }
 
+// TODO: Determine if we always want to ignore draft tiddlers.
+var isDataSavableTiddler = function(data) {
+  // Make sure there is actually a tiddler sent
+  // Make sure that the tiddler that is sent has fields
+  // Ignore draft tiddlers
+  return data.tiddler && data.tiddler.fields && !data.tiddler.fields['draft.of'];
+}
+
+var saveTiddlerIfChanged = function(data) {
+  console.log('Node Save Tiddler');
+  if (!$tw.boot.files[data.tiddler.fields.title]) {
+    $tw.syncadaptor.saveTiddler(data.tiddler, $tw.nodeMessageHandlers.updateBase);
+  } else {
+    // If changed send tiddler
+    var changed = true;
+    try {
+      var tiddlerObject = $tw.loadTiddlersFromFile($tw.boot.files[data.tiddler.fields.title].filepath);
+      changed = $tw.syncadaptor.TiddlerHasChanged(data.tiddler, tiddlerObject);
+    } catch (e) {
+      console.log(e);
+    }
+    if (changed) {
+      $tw.syncadaptor.saveTiddler(data.tiddler, $tw.nodeMessageHandlers.updateBase);
+    }
+  }
+}
+
 /*
   This handles saveTiddler messages sent from the browser.
-
-  TODO: Determine if we always want to ignore draft tiddlers.
 */
 $tw.nodeMessageHandlers.saveTiddler = function(data) {
-  // Make sure there is actually a tiddler sent
-  if (data.tiddler) {
-    // Make sure that the tiddler that is sent has fields
-    if (data.tiddler.fields) {
-      // Ignore draft tiddlers
-      if (!data.tiddler.fields['draft.of']) {
-        // Set the saved tiddler as no longer being edited. It isn't always
-        // being edited but checking eacd time is more complex than just always
-        // setting it this way and doesn't benifit us.
-        $tw.nodeMessageHandlers.cancelEditingTiddler({data:data.tiddler.fields.title});
-        // Make sure that the waitinhg list object has an entry for this
-        // connection
-        $tw.MultiUser.WaitingList[data.source_connection] = $tw.MultiUser.WaitingList[data.source_connection] || {};
-        // Check to see if we are expecting a save tiddler message from this
-        // connection for this tiddler.
-        if (!$tw.MultiUser.WaitingList[data.source_connection][data.tiddler.fields.title]) {
-          // If we are not expecting a save tiddler event than save the tiddler
-          // normally.
-          console.log('Node Save Tiddler');
-          if (!$tw.boot.files[data.tiddler.fields.title]) {
-            $tw.syncadaptor.saveTiddler(data.tiddler, $tw.nodeMessageHandlers.updateBase);
-          } else {
-            // If changed send tiddler
-            var changed = true;
-            try {
-              var tiddlerObject = $tw.loadTiddlersFromFile($tw.boot.files[data.tiddler.fields.title].filepath);
-              changed = $tw.syncadaptor.TiddlerHasChanged(data.tiddler, tiddlerObject);
-            } catch (e) {
-              console.log(e);
-            }
-            if (changed) {
-              $tw.syncadaptor.saveTiddler(data.tiddler, $tw.nodeMessageHandlers.updateBase);
-            }
-          }
-        } else {
-          // If we are expecting a save tiddler message than it is the browser
-          // acknowledging that it received the update and we remove the entry
-          // from the waiting list.
-          // This is very important, without this it gets stuck in infitine
-          // update loops.
-          $tw.MultiUser.WaitingList[data.source_connection][data.tiddler.fields.title] = false;
-        }
-      }
+  
+  if (isDataSavableTiddler(data)) {
+    // Set the saved tiddler as no longer being edited. It isn't always
+    // being edited but checking eacd time is more complex than just always
+    // setting it this way and doesn't benifit us.
+    $tw.nodeMessageHandlers.cancelEditingTiddler({data:data.tiddler.fields.title});
+    // Make sure that the waitinhg list object has an entry for this
+    // connection
+    $tw.MultiUser.WaitingList[data.source_connection] = $tw.MultiUser.WaitingList[data.source_connection] || {};
+    // Check to see if we are expecting a save tiddler message from this
+    // connection for this tiddler.
+    if (!$tw.MultiUser.WaitingList[data.source_connection][data.tiddler.fields.title]) {
+      // If we are not expecting a save tiddler event than save the tiddler
+      // normally.
+      saveTiddlerIfChanged(data);
+    } else {
+      // If we are expecting a save tiddler message than it is the browser
+      // acknowledging that it received the update and we remove the entry
+      // from the waiting list.
+      // This is very important, without this it gets stuck in infitine
+      // update loops.
+      $tw.MultiUser.WaitingList[data.source_connection][data.tiddler.fields.title] = false;
     }
+  }
+}
+
+$tw.nodeMessageHandlers.saveQueuedTiddler = function(data) {
+  if (isDataSavableTiddler(data)) {
+    saveTiddlerIfChanged(data);
+    $tw.MultiUser.WaitingList[data.source_connection][data.tiddler.fields.title] = false;
   }
 }
 
