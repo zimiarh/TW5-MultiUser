@@ -21,9 +21,64 @@ socket server, but it can be extended for use with other web socket servers.
 
   $tw.browserMessageHandlers = $tw.browserMessageHandlers || {};
 
+  $tw.MultiUser = $tw.MultiUser || {};
+
+  var IsQueued = function(tiddlerTitle) {
+    return true;
+  }
+
+  var processingChangeHandler = function(tiddlerTitle, change) {
+    if (change.modified) {
+      // console.log('Modified/Created Tiddler');
+      var tiddler = $tw.wiki.getTiddler(tiddlerTitle);
+      var message = JSON.stringify({messageType: 'saveTiddler', tiddler: tiddler});
+      $tw.socket.send(message);
+    } else if (change.deleted) {
+      // console.log('Deleted Tiddler');
+      var message = JSON.stringify({messageType: 'deleteTiddler', tiddler: tiddlerTitle});
+      $tw.socket.send(message);
+    }
+  }
+
+  var queueingChangeHandler = function(tiddlerTitle, change) {
+    if (tiddlerTitle in $tw.MultiUser.QueuedChanges) {
+      // if the tiddler has been deleted already, then queuing any changes for it would be rediculous
+      if ($tw.MultiUser.QueuedChanges[tiddlerTitle].modified) {
+        $tw.MultiUser.QueuedChanges[tiddlerTitle] = change;
+      }
+    }
+    else {
+      $tw.MultiUser.QueuedChanges[tiddlerTitle] = change;
+    }
+  }
+
+  var filteringChangesHandler = function(changes) {
+    Object.keys(changes).forEach(function(tiddlerTitle) {
+      if ($tw.MultiUser.ExcludeList.indexOf(tiddlerTitle) === -1 && !tiddlerTitle.startsWith('$:/state/') && !tiddlerTitle.startsWith('$:/temp/')) {
+        if (IsQueued(tiddlerTitle)) {
+          queueingChangeHandler(tiddlerTitle, changes[tiddlerTitle]);
+        }
+        else {
+          processingChangeHandler(tiddlerTitle, changes[tiddlerTitle]);
+        }
+      }
+    });
+  }
+
+  var changesHandler = function(changes) {
+    Object.keys(changes).forEach(function(tiddlerTitle) {
+      processingChangeHandler(tiddlerTitle, changes[tiddlerTitle]);
+    })
+  }
+
   exports.startup = function() {
     // Ensure that the needed objects exist
     $tw.MultiUser = $tw.MultiUser || {};
+    $tw.MultiUser.QueuedChanges = $tw.MultiUser.QueuedChanges || {};
+    $tw.MultiUser.PushQueuedChanges = function() {
+      changesHandler($tw.MultiUser.QueuedChanges);
+      $tw.MultiUser.QueuedChanges = {};
+    }
     $tw.MultiUser.ExcludeList = $tw.MultiUser.ExcludeList || ['$:/StoryList', '$:/HistoryList', '$:/status/UserName', '$:/Import'];
 
     // Do all actions on startup.
@@ -73,15 +128,19 @@ socket server, but it can be extended for use with other web socket servers.
     var addHooks = function() {
       $tw.hooks.addHook("th-editing-tiddler", function(event) {
         // console.log('Editing tiddler event: ', event);
-        var message = JSON.stringify({messageType: 'editingTiddler', tiddler: event.tiddlerTitle});
-        $tw.socket.send(message);
+        if (!IsQueued(event.tiddlerTitle)) {
+          var message = JSON.stringify({messageType: 'editingTiddler', tiddler: event.tiddlerTitle});
+          $tw.socket.send(message);
+        }
         // do the normal editing actions for the event
         return true;
       });
       $tw.hooks.addHook("th-cancelling-tiddler", function(event) {
         // console.log("cancel editing event: ",event);
-        var message = JSON.stringify({messageType: 'cancelEditingTiddler', tiddler: event.tiddlerTitle});
-        $tw.socket.send(message);
+        if (!IsQueued(event.tiddlerTitle)) {
+          var message = JSON.stringify({messageType: 'cancelEditingTiddler', tiddler: event.tiddlerTitle});
+          $tw.socket.send(message);
+        }
         // Do the normal handling
         return event;
       });
@@ -98,22 +157,7 @@ socket server, but it can be extended for use with other web socket servers.
         This ignores tiddlers that are in the exclude list as well as tiddlers
         with titles starting with $:/temp/ or $:/state/
       */
-    	$tw.wiki.addEventListener("change",function(changes) {
-        Object.keys(changes).forEach(function(tiddlerTitle) {
-          if ($tw.MultiUser.ExcludeList.indexOf(tiddlerTitle) === -1 && !tiddlerTitle.startsWith('$:/state/') && !tiddlerTitle.startsWith('$:/temp/')) {
-            if (changes[tiddlerTitle].modified) {
-              // console.log('Modified/Created Tiddler');
-              var tiddler = $tw.wiki.getTiddler(tiddlerTitle);
-              var message = JSON.stringify({messageType: 'saveTiddler', tiddler: tiddler});
-              $tw.socket.send(message);
-            } else if (changes[tiddlerTitle].deleted) {
-              // console.log('Deleted Tiddler');
-              var message = JSON.stringify({messageType: 'deleteTiddler', tiddler: tiddlerTitle});
-              $tw.socket.send(message);
-            }
-          }
-        });
-    	});
+    	$tw.wiki.addEventListener("change", filteringChangesHandler);
       /*
         Below here are skeletons for adding new actions to existing hooks.
         None are needed right now but the skeletons may help later.

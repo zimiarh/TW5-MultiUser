@@ -1,10 +1,11 @@
 /*\
-title: $:/core/modules/widgets/action-createtiddler.js
+title: $:/plugins/OokTech/MultiUser/action-manualpush.js
 type: application/javascript
 module-type: widget
 
-Action widget to create a new tiddler with a unique name and specified fields.
+Action widget to do a manually push
 
+<$action-manualpush>
 \*/
 (function(){
 
@@ -56,7 +57,7 @@ Action widget to create a new tiddler with a unique name and specified fields.
     Invoke the action associated with this widget
     */
     ManualPushWidget.prototype.invokeAction = function(triggeringWidget,event) {
-        console.log('ker ker knoking')
+        $tw.MultiUser.PushQueuedChanges();
         return true; // Action was invoked
     };
     
