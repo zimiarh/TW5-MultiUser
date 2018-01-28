@@ -153,6 +153,8 @@ if (fs) {
         // If the event is that the file has been deleted than it won't exist
         // but we still need to act here.
         if(fs.existsSync(itemPath)) {
+          console.log("File " + filename + " exists");
+
           if (fs.lstatSync(itemPath).isFile()) {
             // Load tiddler data from the file
             var tiddlerObject = $tw.loadTiddlersFromFile(itemPath);
@@ -163,7 +165,7 @@ if (fs) {
             // tiddlres with meta files.
             var rename = false;
             if (tiddlerObject.tiddlers[0].title) {
-              var tiddlerFileTitle = filename.slice(0,-4);
+              var tiddlerFileTitle = path.basename(filename, path.extname(filename))
               if (tiddlerFileTitle !== $tw.syncadaptor.generateTiddlerBaseFilepath(tiddlerObject.tiddlers[0].title)) {
                 rename = true;
               }
@@ -196,7 +198,7 @@ if (fs) {
               if (rename || (!tiddler && tiddlerName)) {
                 if (rename) {
                   // translate tiddler title into filepath
-                  var theFilepath = path.join(folder, $tw.syncadaptor.generateTiddlerBaseFilepath(tiddlerObject.tiddlers[0].title) + '.tid');
+                  var theFilepath = path.join(folder, $tw.syncadaptor.generateTiddlerBaseFilepath(tiddlerObject.tiddlers[0].title) + '.tiddler');
                 } else {
                   var theFilepath = $tw.boot.files[tiddlerName].filepath;
                 }
@@ -255,6 +257,7 @@ if (fs) {
 
           }
         } else {
+          console.log("File " + filename + " NOT exists");
           console.log('Delete Tiddler ', folder, '/', filename)
           $tw.MultiUser.DeleteTiddler(folder, filename);
         }
@@ -273,17 +276,17 @@ if (fs) {
 
     // Create the file info also
     var fileInfo = {};
-    var tiddlerType = tiddler.fields.type || "text/vnd.tiddlywiki";
+    var tiddlerType = tiddler.fields.type || "application/x-tiddler-html-div";
     // Get the content type info
     var contentTypeInfo = $tw.config.contentTypeInfo[tiddlerType] || {};
     // Get the file type by looking up the extension
-    var extension = contentTypeInfo.extension || ".tid";
-    fileInfo.type = ($tw.config.fileExtensionInfo[extension] || {type: "application/x-tiddler"}).type;
+    var extension = contentTypeInfo.extension || ".tiddler";
+    fileInfo.type = ($tw.config.fileExtensionInfo[extension] || {type: "application/x-tiddler-html-div"}).type;
     // Use a .meta file unless we're saving a .tid file.
     // (We would need more complex logic if we supported other template rendered tiddlers besides .tid)
-    fileInfo.hasMetaFile = (fileInfo.type !== "application/x-tiddler") && (fileInfo.type !== "application/json");
+    fileInfo.hasMetaFile = (fileInfo.type !== "application/x-tiddler-html-div") && (fileInfo.type !== "application/json");
     if(!fileInfo.hasMetaFile) {
-      extension = ".tid";
+      extension = ".tiddler";
     }
     // Set the final fileInfo
     fileInfo.filepath = itemPath;

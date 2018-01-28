@@ -60,22 +60,23 @@ WebsocketAdaptor.prototype.getTiddlerFileInfo = function(tiddler,callback) {
     title = tiddler.fields.title,
     fileInfo = $tw.boot.files[title];
   if(fileInfo) {
+    console.log("fileInfo ready: " + title);
     // If so, just invoke the callback
     callback(null,fileInfo);
   } else {
     // Otherwise, we'll need to generate it
     fileInfo = {};
-    var tiddlerType = tiddler.fields.type || "text/vnd.tiddlywiki";
+    var tiddlerType = tiddler.fields.type || "application/x-tiddler-html-div";
     // Get the content type info
     var contentTypeInfo = $tw.config.contentTypeInfo[tiddlerType] || {};
     // Get the file type by looking up the extension
-    var extension = contentTypeInfo.extension || ".tid";
-    fileInfo.type = ($tw.config.fileExtensionInfo[extension] || {type: "application/x-tiddler"}).type;
+    var extension = contentTypeInfo.extension || ".tiddler";
+    fileInfo.type = ($tw.config.fileExtensionInfo[extension] || {type: "application/x-tiddler-html-div"}).type;
     // Use a .meta file unless we're saving a .tid file.
     // (We would need more complex logic if we supported other template rendered tiddlers besides .tid)
-    fileInfo.hasMetaFile = (fileInfo.type !== "application/x-tiddler") && (fileInfo.type !== "application/json");
+    fileInfo.hasMetaFile = (fileInfo.type !== "application/x-tiddler-html-div") && (fileInfo.type !== "application/json");
     if(!fileInfo.hasMetaFile) {
-      extension = ".tid";
+      extension = ".tiddler";
     }
     // Generate the base filepath and ensure the directories exist
     var baseFilepath = path.resolve($tw.boot.wikiTiddlersPath, self.generateTiddlerBaseFilepath(title));
@@ -212,18 +213,19 @@ WebsocketAdaptor.prototype.saveTiddler = function(tiddler,callback) {
 };
 
 function makeTiddlerFile(tiddler) {
-  var output = "";
+  var output = "<div";
   Object.keys(tiddler.fields).forEach(function(fieldName, index) {
     if (fieldName === 'created' || fieldName === 'modified') {
-      output += `${fieldName}: ${$tw.utils.stringifyDate(new Date(tiddler.fields[fieldName]))}\n`;
+      output += ` ${fieldName}="${$tw.utils.stringifyDate(new Date(tiddler.fields[fieldName]))}"`;
     } else if (fieldName === 'list' || fieldName === 'tags'){
-      output += `${fieldName}: ${$tw.utils.stringifyList(tiddler.fields[fieldName])}\n`;
+      output += ` ${fieldName}="${$tw.utils.stringifyList(tiddler.fields[fieldName])}"`;
     } else if (fieldName !== 'text') {
-      output += `${fieldName}: ${tiddler.fields[fieldName]}\n`;
+      output += ` ${fieldName}="${tiddler.fields[fieldName]}"`;
     }
   })
+  output += `>\n<pre>`
   if (tiddler.fields.text) {
-    output += `\n${tiddler.fields.text}\n`;
+    output += `${tiddler.fields.text}</pre>\n</div>\n`;
   }
   return output;
 }
