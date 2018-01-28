@@ -55,11 +55,18 @@ socket server, but it can be extended for use with other web socket servers.
   var filteringChangesHandler = function(changes) {
     Object.keys(changes).forEach(function(tiddlerTitle) {
       if ($tw.MultiUser.ExcludeList.indexOf(tiddlerTitle) === -1 && !tiddlerTitle.startsWith('$:/state/') && !tiddlerTitle.startsWith('$:/temp/')) {
-        if (IsQueued(tiddlerTitle)) {
-          queueingChangeHandler(tiddlerTitle, changes[tiddlerTitle]);
+        if (!$tw.browserMessageHandlers.isTiddlerFromServer(tiddlerTitle)) {
+          var tiddlerLatestVersion = $tw.wiki.getTiddler(tiddlerTitle);
+        
+          if (IsQueued(tiddlerTitle)) {
+            queueingChangeHandler(tiddlerTitle, changes[tiddlerTitle]);
+          }
+          else {
+            processingChangeHandler(tiddlerTitle, changes[tiddlerTitle]);
+          }
         }
         else {
-          processingChangeHandler(tiddlerTitle, changes[tiddlerTitle]);
+          delete $tw.browserMessageHandlers.remoteAddedTiddlers[tiddlerTitle];
         }
       }
     });
