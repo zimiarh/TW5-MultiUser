@@ -52,21 +52,28 @@ socket server, but it can be extended for use with other web socket servers.
     }
   }
 
+  function QueueOrProcessTiddlerChange(tiddlerTitle, change) {
+    if (IsQueued(tiddlerTitle)) {
+      queueingChangeHandler(tiddlerTitle, change);
+    }
+    else {
+      processingChangeHandler(tiddlerTitle, change);
+    }
+  }
+
   var filteringChangesHandler = function(changes) {
     Object.keys(changes).forEach(function(tiddlerTitle) {
       if ($tw.MultiUser.ExcludeList.indexOf(tiddlerTitle) === -1 && !tiddlerTitle.startsWith('$:/state/') && !tiddlerTitle.startsWith('$:/temp/')) {
-        if (!$tw.browserMessageHandlers.isTiddlerFromServer(tiddlerTitle)) {
-          var tiddlerLatestVersion = $tw.wiki.getTiddler(tiddlerTitle);
-        
-          if (IsQueued(tiddlerTitle)) {
-            queueingChangeHandler(tiddlerTitle, changes[tiddlerTitle]);
+        if (changes[tiddlerTitle].deleted) {
+          QueueOrProcessTiddlerChange(tiddlerTitle, changes[tiddlerTitle]); // process deleted tiddler
+        }
+        else{
+          if (!$tw.browserMessageHandlers.isTiddlerFromServer(tiddlerTitle)) {
+            QueueOrProcessTiddlerChange(tiddlerTitle, changes[tiddlerTitle]);
           }
           else {
-            processingChangeHandler(tiddlerTitle, changes[tiddlerTitle]);
+            delete $tw.browserMessageHandlers.remoteAddedTiddlers[tiddlerTitle];
           }
-        }
-        else {
-          delete $tw.browserMessageHandlers.remoteAddedTiddlers[tiddlerTitle];
         }
       }
     });

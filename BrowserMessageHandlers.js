@@ -85,8 +85,8 @@ it will overwrite this file.
     var remoteTiddler = $tw.browserMessageHandlers.remoteAddedTiddlers[title];
 
     var isAdding = true;
-    if (remoteAddedTiddlers) {
-      var oldRemoteModified = remoteAddedTiddlers.fields.modified;
+    if (remoteTiddler) {
+      var oldRemoteModified = remoteTiddler.fields.modified;
       var newRemoteModified = tiddler.fields.modified;
       if (oldRemoteModified && newRemoteModified) {
         if (Number.parseInt(newRemoteModified) - Number.parseInt(oldRemoteModified) < 0) {
@@ -103,11 +103,16 @@ it will overwrite this file.
   $tw.browserMessageHandlers.isTiddlerFromServer = function(tiddlerTitle) {
     if (tiddlerTitle) {
       var latestTiddler = $tw.wiki.getTiddler(tiddlerTitle);
+      
+      if (!latestTiddler) {
+        throw tiddlerTitle + ' is not a valid tiddler';
+      }
+
       var remoteAddedTiddler = $tw.browserMessageHandlers.remoteAddedTiddlers[tiddlerTitle];
       return !remoteAddedTiddler || TiddlerHasChanged(remoteAddedTiddler, latestTiddler);
     }
     else {
-      return true;
+      return false;
     }
   }
 
