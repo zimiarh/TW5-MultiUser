@@ -33,7 +33,6 @@ var path = $tw.node ? require("path"): undefined;
 if (fs) {
   // Initialise objects
   $tw.MultiUser = $tw.MultiUser || {};
-  $tw.MultiUser.WaitingList = $tw.MultiUser.WaitingList || {};
   $tw.MultiUser.EditingTiddlers = $tw.MultiUser.EditingTiddlers || {};
   $tw.MultiUser.FolderTree = $tw.MultiUser.FolderTree || {};
 
@@ -228,19 +227,11 @@ if (fs) {
               Object.keys($tw.connections).forEach(function(connectionIndex) {
                 // If the waiting list entry for this connection doesn't exist
                 // than create it as an empty object.
-                if (!$tw.MultiUser.WaitingList[connectionIndex]) {
-                  $tw.MultiUser.WaitingList[connectionIndex] = {};
-                }
-                // If the current tiddler on the current connection isn't on // the waiting list
-                if (!$tw.MultiUser.WaitingList[connectionIndex][tiddler.fields.title]) {
-                  // Update the list of tiddlers currently in the browser
-                  var message = JSON.stringify({type: 'makeTiddler', fields: tiddlerObject.tiddlers[0]});
-                  // TODO make it consistent so that connection is always the
-                  // object instead of sometimes just teh index.
-                  $tw.MultiUser.SendToBrowser($tw.connections[connectionIndex], message);
-                  // Put this tiddler on this connection on the wait list.
-                  $tw.MultiUser.WaitingList[connectionIndex][tiddler.fields.title] = true;
-                }
+                // Update the list of tiddlers currently in the browser
+                var message = JSON.stringify({type: 'makeTiddler', fields: tiddlerObject.tiddlers[0]});
+                // TODO make it consistent so that connection is always the
+                // object instead of sometimes just teh index.
+                $tw.MultiUser.SendToBrowser($tw.connections[connectionIndex], message);
               });
               // Make sure the node process has the current tiddler listed with
               // any new changes.

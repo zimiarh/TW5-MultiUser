@@ -184,9 +184,6 @@ WebsocketAdaptor.prototype.saveTiddler = function(tiddler,callback) {
             // Save with metadata
             console.log('saved file with metadata', filepath)
             $tw.wiki.addTiddler(new $tw.Tiddler(tiddler.fields));
-            Object.keys($tw.connections).forEach(function(connection) {
-              $tw.MultiUser.WaitingList[connection][tiddler.fields.title] = true;
-            });
             return callback(null);
           });
         });
@@ -200,10 +197,6 @@ WebsocketAdaptor.prototype.saveTiddler = function(tiddler,callback) {
           }
           console.log('saved file', filepath)
           $tw.wiki.addTiddler(new $tw.Tiddler(tiddler.fields));
-          Object.keys($tw.connections).forEach(function(connection) {
-            $tw.MultiUser.WaitingList[connection] = $tw.MultiUser.WaitingList[connection] || {};
-            $tw.MultiUser.WaitingList[connection][tiddler.fields.title] = true;
-          });
           return callback(null);
         });
       }

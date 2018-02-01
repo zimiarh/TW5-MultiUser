@@ -115,30 +115,14 @@ $tw.nodeMessageHandlers.saveTiddler = function(data) {
     // being edited but checking eacd time is more complex than just always
     // setting it this way and doesn't benifit us.
     $tw.nodeMessageHandlers.cancelEditingTiddler({data:data.tiddler.fields.title});
-    // Make sure that the waitinhg list object has an entry for this
-    // connection
-    $tw.MultiUser.WaitingList[data.source_connection] = $tw.MultiUser.WaitingList[data.source_connection] || {};
-    // Check to see if we are expecting a save tiddler message from this
-    // connection for this tiddler.
-    if (!$tw.MultiUser.WaitingList[data.source_connection][data.tiddler.fields.title]) {
-      // If we are not expecting a save tiddler event than save the tiddler
-      // normally.
-      saveTiddlerIfChanged(data);
-    } else {
-      // If we are expecting a save tiddler message than it is the browser
-      // acknowledging that it received the update and we remove the entry
-      // from the waiting list.
-      // This is very important, without this it gets stuck in infitine
-      // update loops.
-      $tw.MultiUser.WaitingList[data.source_connection][data.tiddler.fields.title] = false;
-    }
+    
+    saveTiddlerIfChanged(data);
   }
 }
 
 $tw.nodeMessageHandlers.saveQueuedTiddler = function(data) {
   if (isDataSavableTiddler(data)) {
     saveTiddlerIfChanged(data);
-    $tw.MultiUser.WaitingList[data.source_connection][data.tiddler.fields.title] = false;
   }
 }
 
@@ -150,10 +134,6 @@ $tw.nodeMessageHandlers.saveQueuedTiddler = function(data) {
   new tiddler as a change.
 */
 $tw.nodeMessageHandlers.clearStatus = function(data) {
-  $tw.MultiUser.WaitingList[data.source_connection] = $tw.MultiUser.WaitingList[data.source_connection] || {};
-  if ($tw.MultiUser.WaitingList[data.source_connection][data.title]) {
-    delete $tw.MultiUser.WaitingList[data.source_connection][data.title];
-  }
 }
 
 /*
