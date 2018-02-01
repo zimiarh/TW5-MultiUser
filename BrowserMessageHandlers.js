@@ -109,7 +109,7 @@ it will overwrite this file.
       }
 
       var remoteAddedTiddler = $tw.browserMessageHandlers.remoteAddedTiddlers[tiddlerTitle];
-      return !remoteAddedTiddler || TiddlerHasChanged(remoteAddedTiddler, latestTiddler);
+      return remoteAddedTiddler && !TiddlerHasChanged(remoteAddedTiddler, latestTiddler);
     }
     else {
       return false;

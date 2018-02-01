@@ -64,7 +64,7 @@ socket server, but it can be extended for use with other web socket servers.
   var filteringChangesHandler = function(changes) {
     Object.keys(changes).forEach(function(tiddlerTitle) {
       if ($tw.MultiUser.ExcludeList.indexOf(tiddlerTitle) === -1 && !tiddlerTitle.startsWith('$:/state/') && !tiddlerTitle.startsWith('$:/temp/')) {
-        if (changes[tiddlerTitle].deleted) {
+        if (changes[tiddlerTitle].deleted || !$tw.wiki.getTiddler(tiddlerTitle)) {
           QueueOrProcessTiddlerChange(tiddlerTitle, changes[tiddlerTitle]); // process deleted tiddler
         }
         else{
