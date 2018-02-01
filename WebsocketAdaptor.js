@@ -216,7 +216,10 @@ function makeTiddlerFile(tiddler) {
     }
   })
   if (tiddler.fields.text) {
-    output += `\n${tiddler.fields.text}\n`;
+    output += `\n${tiddler.fields.text}`;
+    if (!output.endsWith('\n')) {
+      output += '\n'; // minimize the impact of appending trailing newline by only adding it when it is necessary
+    }
   }
   return output;
 }
