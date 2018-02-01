@@ -60,13 +60,14 @@ it will overwrite this file.
     // The title must exist and must be a string, everything else is optional
     if (data.fields) {
       if (typeof data.fields.title === 'string') {
+        var newTiddler = new $tw.Tiddler(data.fields);
         // if the tiddler exists already only update it if the update is
         // different than the existing one.
-        var changed = TiddlerHasChanged(data, $tw.wiki.getTiddler(data.fields.title));
+        var changed = TiddlerHasChanged(newTiddler, $tw.wiki.getTiddler(data.fields.title));
         if (changed) {
           console.log('Create Tiddler ', data.fields.title);
-          TryAddToRemoteTiddlers(data);
-          $tw.wiki.addTiddler(new $tw.Tiddler(data.fields));
+          TryAddToRemoteTiddlers(newTiddler);
+          $tw.wiki.addTiddler(new $tw.Tiddler(data.fields)); // create yet another new one to avoid the one cached in remoteAddedTiddlers get reused.
         } else {
           // Respond that we already have this tiddler synced
           var message = JSON.stringify({messageType: 'clearStatus', title: data.fields.title});
@@ -86,10 +87,10 @@ it will overwrite this file.
 
     var isAdding = true;
     if (remoteTiddler) {
-      var oldRemoteModified = remoteTiddler.fields.modified;
-      var newRemoteModified = tiddler.fields.modified;
+      var oldRemoteModified = Date.parse(remoteTiddler.fields.modified);
+      var newRemoteModified = Date.parse(tiddler.fields.modified);
       if (oldRemoteModified && newRemoteModified) {
-        if (Number.parseInt(newRemoteModified) - Number.parseInt(oldRemoteModified) < 0) {
+        if (newRemoteModified - oldRemoteModified < 0) {
           isAdding = false;
         }
       }
@@ -97,6 +98,10 @@ it will overwrite this file.
 
     if (isAdding) {
       $tw.browserMessageHandlers.remoteAddedTiddlers[title] = tiddler;
+      console.log("Adding remote tiddler <" + tiddler.fields.title + ">");
+    }
+    else {
+      console.log("Not adding remote tiddler <" + tiddler.fields.title + ">");
     }
   }
 
