@@ -24,7 +24,12 @@ socket server, but it can be extended for use with other web socket servers.
   $tw.MultiUser = $tw.MultiUser || {};
 
   var IsQueued = function(tiddlerTitle) {
-    return false;
+    if (tiddlerTitle && typeof(tiddlerTitle) === 'string') {
+      return tiddlerTitle.startsWith('$:/plugins/felixhayashi/tiddlymap');
+    }
+    else {
+      return false;
+    }
   }
 
   var processingChangeHandler = function(tiddlerTitle, change) {
