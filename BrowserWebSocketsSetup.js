@@ -32,7 +32,9 @@ socket server, but it can be extended for use with other web socket servers.
       // console.log('Modified/Created Tiddler');
       var tiddler = $tw.wiki.getTiddler(tiddlerTitle);
       var message = JSON.stringify({messageType: 'saveTiddler', tiddler: tiddler});
-      $tw.socket.send(message);
+      if ($tw.socket.readyState == WebSocket.OPEN) {
+        $tw.socket.send(message);
+      }
     } else if (change.deleted) {
       // console.log('Deleted Tiddler');
       var message = JSON.stringify({messageType: 'deleteTiddler', tiddler: tiddlerTitle});
