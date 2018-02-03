@@ -98,8 +98,10 @@ This is the client side program which manages the queued modifications
       Object.keys($tw.MultiUser.QueuedModifications)
       .sort()
       .forEach(tiddlerTitle => {
-          var IsSelectedText = $tw.MultiUser.QueuedModifications[tiddlerTitle].IsSelected ? "O" : "X";
-          text += `<tr><td>${tiddlerTitle}</td><td><\$button>${IsSelectedText}<$action-modificationqueue cmd="toggle" tiddlerTitle=\"${tiddlerTitle}\"/></\$button></td></tr>`;
+          var isSelected = $tw.MultiUser.QueuedModifications[tiddlerTitle].IsSelected;
+          var isSelectedText = isSelected ? "O" : "X";
+          var bgcolor = isSelected ? "#90EE90" : "#A9A9A9";
+          text += `<tr bgcolor=\"${bgcolor}\"><td>${tiddlerTitle}</td><td><\$button>${isSelectedText}<$action-modificationqueue cmd="toggle" tiddlerTitle=\"${tiddlerTitle}\"/></\$button></td></tr>`;
       })
 
       text += "</table>";
