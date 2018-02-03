@@ -1,11 +1,11 @@
 /*\
-title: $:/plugins/OokTech/MultiUser/action-manualpush.js
+title: $:/plugins/OokTech/MultiUser/action-modificationqueue.js
 type: application/javascript
 module-type: widget
 
 Action widget to do a manually push
 
-<$action-manualpush>
+<$action-modificationqueue>
 \*/
 (function(){
 
@@ -36,9 +36,8 @@ Action widget to do a manually push
     Compute the internal state of the widget
     */
     ManualPushWidget.prototype.execute = function() {
-        this.actionBaseTitle = this.getAttribute("$basetitle");
-        this.actionSaveTitle = this.getAttribute("$savetitle");
-        this.actionTimestamp = this.getAttribute("$timestamp","yes") === "yes";
+        this.cmd = this.getAttribute("cmd", undefined);
+        this.tiddlerTitle = this.getAttribute("tiddlerTitle", undefined);
     };
     
     /*
@@ -57,11 +56,30 @@ Action widget to do a manually push
     Invoke the action associated with this widget
     */
     ManualPushWidget.prototype.invokeAction = function(triggeringWidget,event) {
-        $tw.MultiUser.PushQueuedModifications();
+        if (this.cmd === undefined) {
+            throw 'Should specify <cmd> attribute for action-modificationqueue';
+        }
+        else {
+            switch (this.cmd) {
+                case "push":
+                    $tw.MultiUser.PushQueuedModifications();
+                    break;
+
+                case "toggle":
+                    if (!this.tiddlerTitle) {
+                        throw "Should specify <tiddlerTitle> attribute when toggling selected state";
+                    }
+                    else {
+                        $tw.MultiUser.ToggleModificationIsSelectedState(this.tiddlerTitle);
+                    }
+                    break;
+            }
+            
+        }
         return true; // Action was invoked
     };
     
-    exports["action-manualpush"] = ManualPushWidget;
+    exports["action-modificationqueue"] = ManualPushWidget;
     
     })();
     

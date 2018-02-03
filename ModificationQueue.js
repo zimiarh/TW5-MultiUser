@@ -69,6 +69,18 @@ This is the client side program which manages the queued modifications
     }
     $tw.MultiUser.queuedModificationsChangeCallback();
   }
+  
+  $tw.MultiUser.ToggleModificationIsSelectedState = function(tiddlerTitle) {
+    if (tiddlerTitle in $tw.MultiUser.QueuedModifications) {
+        var IsSelected = $tw.MultiUser.QueuedModifications[tiddlerTitle].IsSelected;
+        // not using ^= because IsSelected might not be defined.
+        $tw.MultiUser.QueuedModifications[tiddlerTitle].IsSelected = IsSelected ? false : true; 
+        $tw.MultiUser.queuedModificationsChangeCallback();
+    }
+    else {
+        throw `Try to toggle selected state for ${tiddlerTitle} but cannot find it in queue`;
+    }
+  }
 
   const STATE_TIDDLER_NAME = "$:/state/QueuedModifications";    
 
@@ -82,12 +94,12 @@ This is the client side program which manages the queued modifications
 
   function GetQueuedModifications() {
       $tw.MultiUser.QueuedModifications = $tw.MultiUser.QueuedModifications || {};
-      var text = "<table><tr><th>Queued Changes</th><th>Push</th></tr>";
+      var text = "<table><tr><th>Queued Changes</th><th>Selected</th></tr>";
       Object.keys($tw.MultiUser.QueuedModifications)
       .sort()
       .forEach(tiddlerTitle => {
-          var IsSelectedText = $tw.MultiUser.QueuedModifications[tiddlerTitle].IsSelected ? "IsSelected" : "Holding";
-          text += `<tr><td>${tiddlerTitle}</td><td><\$button>${IsSelectedText}</\$button></td></tr>`;
+          var IsSelectedText = $tw.MultiUser.QueuedModifications[tiddlerTitle].IsSelected ? "O" : "X";
+          text += `<tr><td>${tiddlerTitle}</td><td><\$button>${IsSelectedText}<$action-modificationqueue cmd="toggle" tiddlerTitle=\"${tiddlerTitle}\"/></\$button></td></tr>`;
       })
 
       text += "</table>";
