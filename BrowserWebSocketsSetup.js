@@ -23,15 +23,6 @@ socket server, but it can be extended for use with other web socket servers.
 
   $tw.MultiUser = $tw.MultiUser || {};
 
-  var IsQueued = function(tiddlerTitle) {
-    if (tiddlerTitle && typeof(tiddlerTitle) === 'string') {
-      return tiddlerTitle.startsWith('$:/plugins/felixhayashi/tiddlymap');
-    }
-    else {
-      return false;
-    }
-  }
-
   var processingChangeHandler = function(tiddlerTitle, change) {
     if (change.modified) {
       // console.log('Modified/Created Tiddler');
@@ -47,21 +38,14 @@ socket server, but it can be extended for use with other web socket servers.
     }
   }
 
+  $tw.MultiUser.SendChangeToServer = processingChangeHandler;
+
   var queueingChangeHandler = function(tiddlerTitle, change) {
-    if (tiddlerTitle in $tw.MultiUser.QueuedModifications) {
-      var pushing = $tw.MultiUser.QueuedModifications[tiddlerTitle].Pushing;
-      $tw.MultiUser.QueuedModifications[tiddlerTitle] = change;
-      $tw.MultiUser.QueuedModifications[tiddlerTitle].Pushing = pushing;
-    }
-    else {
-      $tw.MultiUser.QueuedModifications[tiddlerTitle] = change;
-      $tw.MultiUser.QueuedModifications[tiddlerTitle].Pushing = true;
-    }
-    $tw.MultiUser.queuedModificationsChangeCallback();
+    $tw.MultiUser.AddModificationToQueue(tiddlerTitle, change);
   }
 
   function QueueOrProcessTiddlerChange(tiddlerTitle, change) {
-    if (IsQueued(tiddlerTitle)) {
+    if ($tw.MultiUser.IsQueued(tiddlerTitle)) {
       queueingChangeHandler(tiddlerTitle, change);
     }
     else {
@@ -87,58 +71,9 @@ socket server, but it can be extended for use with other web socket servers.
     });
   }
 
-  var changesHandler = function(changes) {
-    Object.keys(changes).forEach(function(tiddlerTitle) {
-      processingChangeHandler(tiddlerTitle, changes[tiddlerTitle]);
-    })
-  }
-
-  const STATE_TIDDLER_NAME = "$:/state/QueuedModifications";    
-
-  /*
-  tiddlers are readonly, sot the only way to update them is to create a new one.
-  */
-  function RefreshQueuedModifications() {
-    var tiddler = new $tw.Tiddler({title: STATE_TIDDLER_NAME, text: GetQueuedModifications()});
-    $tw.wiki.addTiddler(tiddler);
-  }
-
-  function GetQueuedModifications() {
-      $tw.MultiUser.QueuedModifications = $tw.MultiUser.QueuedModifications || {};
-      var text = "<table><tr><th>Queued Changes</th><th>Push</th></tr>";
-      Object.keys($tw.MultiUser.QueuedModifications)
-      .sort()
-      .forEach(tiddlerTitle => {
-          var pushingText = $tw.MultiUser.QueuedModifications[tiddlerTitle].Pushing ? "Pushing" : "Holding";
-          text += `<tr><td>${tiddlerTitle}</td><td><\$button>${pushingText}</\$button></td></tr>`;
-      })
-
-      text += "</table>";
-      return text;
-  }
-
   exports.startup = function() {
     // Ensure that the needed objects exist
     $tw.MultiUser = $tw.MultiUser || {};
-    $tw.MultiUser.QueuedModifications = $tw.MultiUser.QueuedModifications || {};
-    $tw.MultiUser.queuedModificationsChangeCallback = function() {};
-    $tw.MultiUser.RegisterQueuedModificationsChangeCallback = function(callback) {
-      var original = $tw.MultiUser.queuedModificationsChangeCallback;
-      $tw.MultiUser.queuedModificationsChangeCallback = function() {
-        original.apply(arguments);
-        callback.apply(arguments);
-      }
-    }
-    $tw.MultiUser.RegisterQueuedModificationsChangeCallback(RefreshQueuedModifications);
-    $tw.MultiUser.PushQueuedModifications = function() {
-      changesHandler(
-        Object.keys($tw.MultiUser.QueuedModifications).filter(function(tiddlerTitle) {
-          change = $tw.MultiUser.QueuedModifications[tiddlerTitle];
-          return change.Pushing === undefined || change.Pushing === true;
-        }));
-      $tw.MultiUser.QueuedModifications = {};
-      $tw.MultiUser.queuedModificationsChangeCallback();
-    }
     $tw.MultiUser.ExcludeList = $tw.MultiUser.ExcludeList || ['$:/StoryList', '$:/HistoryList', '$:/status/UserName', '$:/Import'];
 
     // Do all actions on startup.
@@ -188,7 +123,7 @@ socket server, but it can be extended for use with other web socket servers.
     var addHooks = function() {
       $tw.hooks.addHook("th-editing-tiddler", function(event) {
         // console.log('Editing tiddler event: ', event);
-        if (!IsQueued(event.tiddlerTitle)) {
+        if (!$tw.MultiUser.IsQueued(event.tiddlerTitle)) {
           var message = JSON.stringify({messageType: 'editingTiddler', tiddler: event.tiddlerTitle});
           $tw.socket.send(message);
         }
@@ -197,7 +132,7 @@ socket server, but it can be extended for use with other web socket servers.
       });
       $tw.hooks.addHook("th-cancelling-tiddler", function(event) {
         // console.log("cancel editing event: ",event);
-        if (!IsQueued(event.tiddlerTitle)) {
+        if (!$tw.MultiUser.IsQueued(event.tiddlerTitle)) {
           var message = JSON.stringify({messageType: 'cancelEditingTiddler', tiddler: event.tiddlerTitle});
           $tw.socket.send(message);
         }
