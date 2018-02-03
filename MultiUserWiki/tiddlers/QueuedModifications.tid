@@ -1,0 +1,13 @@
+created: 20180203214748719
+creator: zimiarh
+title: QueuedModifications
+tags:
+modified: 20180203222930204
+modifier: zimiarh
+
+{{$:/state/QueuedModifications}}
+
+<$button>
+  Send changes
+  <$action-modificationqueue cmd="push"/>
+</$button>
