@@ -12,7 +12,7 @@ Action widget to do a manually push
     /*jslint node: true, browser: true */
     /*global $tw: false */
     "use strict";
-    
+
     var Widget = require("$:/core/modules/widgets/widget.js").widget;
     
     var ManualPushWidget = function(parseTreeNode,options) {
@@ -57,7 +57,7 @@ Action widget to do a manually push
     Invoke the action associated with this widget
     */
     ManualPushWidget.prototype.invokeAction = function(triggeringWidget,event) {
-        $tw.MultiUser.PushQueuedChanges();
+        $tw.MultiUser.PushQueuedModifications();
         return true; // Action was invoked
     };
     

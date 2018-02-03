@@ -48,15 +48,16 @@ socket server, but it can be extended for use with other web socket servers.
   }
 
   var queueingChangeHandler = function(tiddlerTitle, change) {
-    if (tiddlerTitle in $tw.MultiUser.QueuedChanges) {
-      // if the tiddler has been deleted already, then queuing any changes for it would be rediculous
-      if ($tw.MultiUser.QueuedChanges[tiddlerTitle].modified) {
-        $tw.MultiUser.QueuedChanges[tiddlerTitle] = change;
-      }
+    if (tiddlerTitle in $tw.MultiUser.QueuedModifications) {
+      var pushing = $tw.MultiUser.QueuedModifications[tiddlerTitle].Pushing;
+      $tw.MultiUser.QueuedModifications[tiddlerTitle] = change;
+      $tw.MultiUser.QueuedModifications[tiddlerTitle].Pushing = pushing;
     }
     else {
-      $tw.MultiUser.QueuedChanges[tiddlerTitle] = change;
+      $tw.MultiUser.QueuedModifications[tiddlerTitle] = change;
+      $tw.MultiUser.QueuedModifications[tiddlerTitle].Pushing = true;
     }
+    $tw.MultiUser.queuedModificationsChangeCallback();
   }
 
   function QueueOrProcessTiddlerChange(tiddlerTitle, change) {
@@ -92,13 +93,51 @@ socket server, but it can be extended for use with other web socket servers.
     })
   }
 
+  const STATE_TIDDLER_NAME = "$:/state/QueuedModifications";    
+
+  /*
+  tiddlers are readonly, sot the only way to update them is to create a new one.
+  */
+  function RefreshQueuedModifications() {
+    var tiddler = new $tw.Tiddler({title: STATE_TIDDLER_NAME, text: GetQueuedModifications()});
+    $tw.wiki.addTiddler(tiddler);
+  }
+
+  function GetQueuedModifications() {
+      $tw.MultiUser.QueuedModifications = $tw.MultiUser.QueuedModifications || {};
+      var text = "<table><tr><th>Queued Changes</th><th>Push</th></tr>";
+      Object.keys($tw.MultiUser.QueuedModifications)
+      .sort()
+      .forEach(tiddlerTitle => {
+          var pushingText = $tw.MultiUser.QueuedModifications[tiddlerTitle].Pushing ? "Pushing" : "Holding";
+          text += `<tr><td>${tiddlerTitle}</td><td><\$button>${pushingText}</\$button></td></tr>`;
+      })
+
+      text += "</table>";
+      return text;
+  }
+
   exports.startup = function() {
     // Ensure that the needed objects exist
     $tw.MultiUser = $tw.MultiUser || {};
-    $tw.MultiUser.QueuedChanges = $tw.MultiUser.QueuedChanges || {};
-    $tw.MultiUser.PushQueuedChanges = function() {
-      changesHandler($tw.MultiUser.QueuedChanges);
-      $tw.MultiUser.QueuedChanges = {};
+    $tw.MultiUser.QueuedModifications = $tw.MultiUser.QueuedModifications || {};
+    $tw.MultiUser.queuedModificationsChangeCallback = function() {};
+    $tw.MultiUser.RegisterQueuedModificationsChangeCallback = function(callback) {
+      var original = $tw.MultiUser.queuedModificationsChangeCallback;
+      $tw.MultiUser.queuedModificationsChangeCallback = function() {
+        original.apply(arguments);
+        callback.apply(arguments);
+      }
+    }
+    $tw.MultiUser.RegisterQueuedModificationsChangeCallback(RefreshQueuedModifications);
+    $tw.MultiUser.PushQueuedModifications = function() {
+      changesHandler(
+        Object.keys($tw.MultiUser.QueuedModifications).filter(function(tiddlerTitle) {
+          change = $tw.MultiUser.QueuedModifications[tiddlerTitle];
+          return change.Pushing === undefined || change.Pushing === true;
+        }));
+      $tw.MultiUser.QueuedModifications = {};
+      $tw.MultiUser.queuedModificationsChangeCallback();
     }
     $tw.MultiUser.ExcludeList = $tw.MultiUser.ExcludeList || ['$:/StoryList', '$:/HistoryList', '$:/status/UserName', '$:/Import'];
 
