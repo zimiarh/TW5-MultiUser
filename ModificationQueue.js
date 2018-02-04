@@ -43,7 +43,7 @@ This is the client side program which manages the queued modifications
 
   $tw.MultiUser.PushQueuedModifications = function() {
     var remained = {}
-    Object.keys($tw.MultiUser.QueuedModifications).filter(tiddlerTitle => {
+    Object.keys($tw.MultiUser.QueuedModifications).forEach(tiddlerTitle => {
       var change = $tw.MultiUser.QueuedModifications[tiddlerTitle];
       if (change.IsSelected === undefined || change.IsSelected === true) {
         $tw.MultiUser.SendChangeToServer(tiddlerTitle, $tw.MultiUser.QueuedModifications[tiddlerTitle]);
@@ -69,6 +69,17 @@ This is the client side program which manages the queued modifications
     }
     $tw.MultiUser.queuedModificationsChangeCallback();
   }
+
+  $tw.MultiUser.ClearSelectedModifications = function() {
+    var remained = {};
+    $tw.MultiUser.QueuedModifications = Object.keys($tw.MultiUser.QueuedModifications).forEach(tiddlerTitle => {
+      var change = $tw.MultiUser.QueuedModifications[tiddlerTitle];
+      if (change.IsSelected !== undefined && change.IsSelected === false) {
+        remained[tiddlerTitle] = change;
+      }
+    });
+    $tw.MultiUser.queuedModificationsChangeCallback();    
+  }
   
   $tw.MultiUser.ToggleModificationIsSelectedState = function(tiddlerTitle) {
     if (tiddlerTitle in $tw.MultiUser.QueuedModifications) {
@@ -82,7 +93,8 @@ This is the client side program which manages the queued modifications
     }
   }
 
-  const STATE_TIDDLER_NAME = "$:/state/QueuedModifications";    
+  const STATE_TIDDLER_NAME = "$:/state/QueuedModifications";
+  const UI_TIDDLER_NAME = "$:/temp/ui/QueuedModifications";
 
   /*
   tiddlers are readonly, sot the only way to update them is to create a new one.
@@ -108,5 +120,9 @@ This is the client side program which manages the queued modifications
       return text;
   }
 
+  exports.startup = function() {
+    var tiddler = new $tw.Tiddler({title: UI_TIDDLER_NAME, show_operation: "yes", show_push_confirm: "no", show_clear_confirm: "no"});
+    $tw.wiki.addTiddler(tiddler);
+  }
 
 })();

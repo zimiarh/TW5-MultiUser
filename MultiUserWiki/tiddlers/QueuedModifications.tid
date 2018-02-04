@@ -7,7 +7,47 @@ modifier: zimiarh
 
 {{$:/state/QueuedModifications}}
 
-<$button>
-  Send changes
-  <$action-modificationqueue cmd="push"/>
-</$button>
+<$reveal type="match" state="$:/temp/ui/QueuedModifications!!show_operation" text="yes">
+  <$button>
+    Submit Seletected
+    <$action-setfield $tiddler="$:/temp/ui/QueuedModifications" $field="show_push_confirm" $value="yes"/>
+    <$action-setfield $tiddler="$:/temp/ui/QueuedModifications" $field="show_operation" $value="no"/>
+  </$button>
+  <$button>
+    Clear Selected
+    <$action-setfield $tiddler="$:/temp/ui/QueuedModifications" $field="show_clear_confirm" $value="yes"/>
+    <$action-setfield $tiddler="$:/temp/ui/QueuedModifications" $field="show_operation" $value="no"/>
+  </$button>
+</$reveal>
+
+<$reveal type="match" state="$:/temp/ui/QueuedModifications!!show_push_confirm" text="yes">
+  Are you sure you want to submit all the selected modifications?
+
+  <$button>
+    Confirm
+    <$action-modificationqueue cmd="push"/>
+    <$action-setfield $tiddler="$:/temp/ui/QueuedModifications" $field="show_push_confirm" $value="no"/>
+    <$action-setfield $tiddler="$:/temp/ui/QueuedModifications" $field="show_operation" $value="yes"/>
+  </$button>
+  <$button>
+    Cancel
+    <$action-setfield $tiddler="$:/temp/ui/QueuedModifications" $field="show_push_confirm" $value="no"/>
+    <$action-setfield $tiddler="$:/temp/ui/QueuedModifications" $field="show_operation" $value="yes"/>
+  </$button>
+</$reveal>
+
+<$reveal type="match" state="$:/temp/ui/QueuedModifications!!show_clear_confirm" text="yes">
+  Are you sure you want to clear all the selected modifications?
+
+  <$button>
+    Confirm
+    <$action-modificationqueue cmd="clear"/>
+    <$action-setfield $tiddler="$:/temp/ui/QueuedModifications" $field="show_clear_confirm" $value="no"/>
+    <$action-setfield $tiddler="$:/temp/ui/QueuedModifications" $field="show_operation" $value="yes"/>
+  </$button>
+  <$button>
+    Cancel
+    <$action-setfield $tiddler="$:/temp/ui/QueuedModifications" $field="show_clear_confirm" $value="no"/>
+    <$action-setfield $tiddler="$:/temp/ui/QueuedModifications" $field="show_operation" $value="yes"/>
+  </$button>
+</$reveal>

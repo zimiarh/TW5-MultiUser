@@ -73,6 +73,10 @@ Action widget to do a manually push
                         $tw.MultiUser.ToggleModificationIsSelectedState(this.tiddlerTitle);
                     }
                     break;
+
+                case "clear":
+                    $tw.MultiUser.ClearSelectedModifications();
+                    break;
             }
             
         }
