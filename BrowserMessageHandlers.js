@@ -38,7 +38,7 @@ it will overwrite this file.
   $tw.browserMessageHandlers = $tw.browserMessageHandlers || {};
 
 
-  $tw.browserMessageHandlers.remoteAddedTiddlers = $tw.browserMessageHandlers.remoteAddedTiddlers || {};
+  $tw.browserMessageHandlers.remoteAddedTiddlerSets = $tw.browserMessageHandlers.remoteAddedTiddlerSets || {};
 
   /*
     TODO - determine if we should sanitise the tiddler titles and field names
@@ -67,7 +67,7 @@ it will overwrite this file.
         if (changed) {
           console.log('Create Tiddler ', data.fields.title);
           TryAddToRemoteTiddlers(newTiddler);
-          $tw.wiki.addTiddler(new $tw.Tiddler(data.fields)); // create yet another new one to avoid the one cached in remoteAddedTiddlers get reused.
+          $tw.wiki.addTiddler(new $tw.Tiddler(data.fields)); // create yet another new one to avoid the one cached in remoteAddedTiddlerSets get reused.
         } else {
           // Respond that we already have this tiddler synced
           var message = JSON.stringify({messageType: 'clearStatus', title: data.fields.title});
@@ -83,42 +83,41 @@ it will overwrite this file.
 
   function TryAddToRemoteTiddlers(tiddler) {
     var title = tiddler.fields.title;
-    var remoteTiddler = $tw.browserMessageHandlers.remoteAddedTiddlers[title];
+    var remoteTiddlerSet = $tw.browserMessageHandlers.remoteAddedTiddlerSets[title] || [];
 
-    var isAdding = true;
-    if (remoteTiddler) {
-      var oldRemoteModified = Date.parse(remoteTiddler.fields.modified);
-      var newRemoteModified = Date.parse(tiddler.fields.modified);
-      if (oldRemoteModified && newRemoteModified) {
-        if (newRemoteModified - oldRemoteModified < 0) {
-          isAdding = false;
-        }
-      }
-    }
-
-    if (isAdding) {
-      $tw.browserMessageHandlers.remoteAddedTiddlers[title] = tiddler;
+    if (remoteTiddlerSet.findIndex(tid => { return TiddlersEqual(tid, tiddler); }) === -1) {
       console.log("Adding remote tiddler <" + tiddler.fields.title + ">");
+      remoteTiddlerSet.push(tiddler);
     }
     else {
       console.log("Not adding remote tiddler <" + tiddler.fields.title + ">");
     }
+
+    $tw.browserMessageHandlers.remoteAddedTiddlerSets[title] = remoteTiddlerSet;
   }
 
-  $tw.browserMessageHandlers.isTiddlerFromServer = function(tiddlerTitle) {
-    if (tiddlerTitle) {
-      var latestTiddler = $tw.wiki.getTiddler(tiddlerTitle);
-      
-      if (!latestTiddler) {
-        throw tiddlerTitle + ' is not a valid tiddler';
-      }
+  $tw.browserMessageHandlers.RemoveRemoteTiddler = function(tiddler) {
+    var title = tiddler.fields.title;
+    var remoteTiddlerSet = $tw.browserMessageHandlers.remoteAddedTiddlerSets[title] || [];
+    var index = remoteTiddlerSet.findIndex(tid => { return TiddlerHasChanged(tid, tiddler)});
+    if (index !== -1) {
+      remoteTiddlerSet.splice(index, 1);
+    }
+  }
 
-      var remoteAddedTiddler = $tw.browserMessageHandlers.remoteAddedTiddlers[tiddlerTitle];
-      return remoteAddedTiddler && !TiddlerHasChanged(remoteAddedTiddler, latestTiddler);
+  $tw.browserMessageHandlers.isTiddlerFromServer = function(tiddler) {
+    if (tiddler) {
+      var tiddlerTitle = tiddler.fields.title;
+      var tiddlerSet = $tw.browserMessageHandlers.remoteAddedTiddlerSets[tiddlerTitle];
+      return tiddlerSet && tiddlerSet.findIndex(tid => { return TiddlersEqual(tid, tiddler)}) !== -1;
     }
     else {
       return false;
     }
+  }
+
+  function TiddlersEqual(tiddler, other) {
+    return !TiddlerHasChanged(tiddler, other);
   }
 
   /*

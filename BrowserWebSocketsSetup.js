@@ -60,11 +60,12 @@ socket server, but it can be extended for use with other web socket servers.
           QueueOrProcessTiddlerChange(tiddlerTitle, changes[tiddlerTitle]); // process deleted tiddler
         }
         else{
-          if (!$tw.browserMessageHandlers.isTiddlerFromServer(tiddlerTitle)) {
+          var tiddler = $tw.wiki.getTiddler(tiddlerTitle);
+          if (!$tw.browserMessageHandlers.isTiddlerFromServer(tiddler)) {
             QueueOrProcessTiddlerChange(tiddlerTitle, changes[tiddlerTitle]);
           }
           else {
-            delete $tw.browserMessageHandlers.remoteAddedTiddlers[tiddlerTitle];
+            $tw.browserMessageHandlers.RemoveRemoteTiddler(tiddler);
           }
         }
       }
