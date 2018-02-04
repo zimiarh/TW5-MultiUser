@@ -153,7 +153,22 @@ socket server, but it can be extended for use with other web socket servers.
         This ignores tiddlers that are in the exclude list as well as tiddlers
         with titles starting with $:/temp/ or $:/state/
       */
-    	$tw.wiki.addEventListener("change", filteringChangesHandler);
+      $tw.wiki.addEventListener("change", filteringChangesHandler);
+      
+      /*
+        Cancel editing tiddler when saving because the saved tiddler 
+        could be the same as one of the tiddlers received from server
+      */
+      $tw.wiki.addEventListener("th-saving-tiddler", tiddler => {
+        var tiddlerTitle = tiddler.fields.title;
+        
+        if (!$tw.MultiUser.IsQueued(tiddlerTitle)) {
+          var message = JSON.stringify({messageType: 'cancelEditingTiddler', tiddler: tiddlerTitle});
+          $tw.socket.send(message);
+        }
+
+        return tiddler;
+      });
       /*
         Below here are skeletons for adding new actions to existing hooks.
         None are needed right now but the skeletons may help later.
