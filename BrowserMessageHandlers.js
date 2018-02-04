@@ -99,7 +99,7 @@ it will overwrite this file.
   $tw.browserMessageHandlers.RemoveRemoteTiddler = function(tiddler) {
     var title = tiddler.fields.title;
     var remoteTiddlerSet = $tw.browserMessageHandlers.remoteAddedTiddlerSets[title] || [];
-    var index = remoteTiddlerSet.findIndex(tid => { return TiddlerHasChanged(tid, tiddler)});
+    var index = remoteTiddlerSet.findIndex(tid => { return !TiddlerHasChanged(tid, tiddler)});
     if (index !== -1) {
       remoteTiddlerSet.splice(index, 1);
     }
