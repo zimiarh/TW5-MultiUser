@@ -27,9 +27,11 @@ socket server, but it can be extended for use with other web socket servers.
     if (change.modified) {
       // console.log('Modified/Created Tiddler');
       var tiddler = $tw.wiki.getTiddler(tiddlerTitle);
-      var message = JSON.stringify({messageType: 'saveTiddler', tiddler: tiddler});
-      if ($tw.socket.readyState == WebSocket.OPEN) {
-        $tw.socket.send(message);
+      if (tiddler && !tiddler.fields['draft.of']) {
+        var message = JSON.stringify({messageType: 'saveTiddler', tiddler: tiddler});
+        if ($tw.socket.readyState == WebSocket.OPEN) {
+          $tw.socket.send(message);
+        }
       }
     } else if (change.deleted) {
       // console.log('Deleted Tiddler');
