@@ -176,8 +176,18 @@ it will overwrite this file.
       if ($tw.wiki.tiddlerExists('$:/plugins/OokTech/MultiUser/Server Warning')) {
         $tw.wiki.deleteTiddler('$:/plugins/OokTech/MultiUser/Server Warning');
       }
-      $tw.settings.heartbeat = $tw.settings.heartbeat || {};
-      $tw.settings.heartbeat.interval = $tw.settings.heartbeat.interval || 1000;
+
+      if (!$tw.settings.heartbeat || !$tw.settings.heartbeat.interval) {
+        $tw.settings.heartbeat = $tw.settings.heartbeat || {};
+
+        var heartbeatTiddler = $tw.wiki.getTiddler("$:/Heartbeat");
+        $tw.settings.heartbeat["interval"] =
+          heartbeatTiddler ?
+          parseInt(heartbeatTiddler.fields['interval']) || 1000 :
+          1000;
+      }
+
+
       $tw.utils.toggleClass(document.body,"tc-dirty",false);
       // Clear the time to live timeout.
       clearTimeout($tw.settings.heartbeat.TTLID);

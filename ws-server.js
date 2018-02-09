@@ -305,7 +305,8 @@ Command.prototype.execute = function() {
 		username = $tw.settings['ws-server'].username,
 		password = $tw.settings['ws-server'].password,
 		host = $tw.settings['ws-server'].host || "127.0.0.1",
-		pathprefix = $tw.settings['ws-server'].pathprefix;
+		pathprefix = $tw.settings['ws-server'].pathprefix,
+		heartbeat = $tw.settings['heartbeat'].interval || "1000";
 	$tw.httpServer.set({
 		rootTiddler: rootTiddler,
 		renderType: renderType,
@@ -314,6 +315,8 @@ Command.prototype.execute = function() {
 		password: password,
 		pathprefix: pathprefix
 	});
+
+	$tw.wiki.addTiddler(new $tw.Tiddler({title: "$:/Heartbeat", interval: heartbeat}))
 
   $tw.httpServer.listen(port,host);
 	return null;
