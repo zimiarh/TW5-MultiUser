@@ -166,7 +166,7 @@ SimpleServer.prototype.requestHandler = function(request,response) {
 		if(self.checkCredentials(request,username,password) !== "ALLOWED") {
 			var servername = state.wiki.getTiddlerText("$:/SiteTitle") || "TiddlyWiki5";
 			response.writeHead(401,"Authentication required",{
-				"WWW-Authenticate": 'Basic realm="Please provide your username and password to login to ' + servername + '"'
+				"WWW-Authenticate": 'Basic realm="Please provide your username and password to login to the TiddlyWiki"'
 			});
 			response.end();
 			return;
