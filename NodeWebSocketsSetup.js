@@ -160,6 +160,15 @@ function handleConnection(client) {
       console.log(err);
     }
   });
+
+  var tiddlerFields = {title: "$:/state/MultiUser/EditingTiddlers", list: $tw.utils.stringifyList(Object.keys($tw.MultiUser.EditingTiddlers))};
+  var message = JSON.stringify({type: 'makeTiddler', fields: tiddlerFields});
+  client.send(message, function (err) {
+    // Send callback function, only used for error handling at the moment.
+    if (err) {
+      console.log('Websocket sending error:',err);
+    }
+  });
 }
 
 // Only act if we are running on node. Otherwise WebSocketServer will be
