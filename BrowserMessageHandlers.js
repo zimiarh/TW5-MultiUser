@@ -177,14 +177,12 @@ it will overwrite this file.
         $tw.wiki.deleteTiddler('$:/plugins/OokTech/MultiUser/Server Warning');
       }
 
-      if (!$tw.settings.heartbeat || !$tw.settings.heartbeat.interval) {
-        $tw.settings.heartbeat = $tw.settings.heartbeat || {};
+      $tw.settings.heartbeat = $tw.settings.heartbeat || {};
 
-        var heartbeatTiddler = $tw.wiki.getTiddler("$:/Heartbeat");
-        $tw.settings.heartbeat["interval"] =
-          heartbeatTiddler ?
-          parseInt(heartbeatTiddler.fields['interval']) || 1000 :
-          1000;
+      if (!$tw.settings.heartbeat.interval) {
+        var heartbeatTiddler = $tw.wiki.getTiddler("$:/WikiSettings/split/heartbeat") || {text: "{}"};
+        var heartbeat = JSON.parse(heartbeatTiddler.fields.text) || {};
+        $tw.settings.heartbeat["interval"] = heartbeat.interval || 1000;
       }
 
 
