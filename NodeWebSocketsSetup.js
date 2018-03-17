@@ -184,10 +184,12 @@ function setupOverheatFuse() {
 }
 
 function checkIfOverheatedPeriodically() {
+  console.log("Check for overheat...");
   var isSpecificConnectionOverheated = false;
   $tw.connections.forEach(connection => {
     let perConnectionMessages = connection.messagesHandled || 0;
     if (perConnectionMessages > 10 * 5) {
+      console.log("Close a socket due to connection overheat");
       connection.socket.close(500, "Socket connection closed because the number of messages transferred exceeds the limit");
       isSpecificConnectionOverheated = true;
     }
@@ -200,6 +202,7 @@ function checkIfOverheatedPeriodically() {
     $tw.allMessagesHandled = $tw.allMessagesHandled || 0;
     if ($tw.allMessagesHandled > 10 * 10 * 5) { // max: 10 active connections, over 10 seconds, 5 messages per second
       // Closes all connections
+      console.log("Close all sockets due to connection overheat");
       $tw.connections.forEach(connection => {
         connection.close(503, "Server connection closed because the number of messages transferred exceeds the limit");
       })
