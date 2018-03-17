@@ -180,10 +180,36 @@ function handleConnection(client) {
 
 function setupOverheatFuse() {
   $tw.allMessagesHandled = 0;
-  setInterval(checkIfOverheatedPeriodically, 10000); // Check if the server is overheated every 10 seconds
+  tryCheckIfOverheatedPeriodically();
 }
 
-function checkIfOverheatedPeriodically() {
+function tryCheckIfOverheatedPeriodically() {
+  let overheatSetting = $tw.wiki.getTiddler("$:/WikiSettings/split/overheat");
+  if (!overheatSetting) {
+    overheatSetting = {
+      title: "$:/WikiSettings/split/overheat",
+      fields: {
+        interval: 10000,
+        isEnabled: true
+      }
+    };
+
+    let serverSetting = $tw.wiki.getTiddler("$:/WikiSettings/splits");
+    let isServerSettingReady = serverSetting !== null && serverSetting !== undefined;
+
+    if (isServerSettingReady) { // Server setting loaded, but overheatSetting not found. We should add a default one
+      $tw.wiki.addTiddler(new $tw.Tiddler(overheatSetting));
+    }
+  }
+
+  if (overheatSetting.fields['isEnabled']) {
+    checkIfOverheated();
+  }
+
+  scheduleOverheatCheck(overheatSetting.fields['interval']);
+}
+
+function checkIfOverheated() {
   console.log("Check for overheat...");
   let isSpecificConnectionOverheated = false;
 
@@ -210,7 +236,10 @@ function checkIfOverheatedPeriodically() {
 
     $tw.allMessagesHandled = 0;
   }
+}
 
+function scheduleOverheatCheck(interval) {
+  setTimeout(tryCheckIfOverheatedPeriodically, interval)
 }
 
 // Only act if we are running on node. Otherwise WebSocketServer will be
