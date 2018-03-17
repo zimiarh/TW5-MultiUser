@@ -36,6 +36,8 @@ var setup = function () {
   $tw.nodeMessageHandlers = $tw.nodeMessageHandlers || {};
   // Initialise connections array
   $tw.connections = [];
+  setInterval(checkIfOverheatedPeriodically, 10000); // Check if the server is overheated every 10 seconds
+  
   // We need to get the ip address of the node process so that we can connect
   // to the websocket server from the browser
   // This is the node ip module wrapped in a tiddler so it can be packaged with
@@ -103,6 +105,7 @@ var setup = function () {
 
     // Set the onconnection function
     $tw.wss.on('connection', handleConnection);
+    
 
     // I don't know how to set up actually closing a connection, so this doesn't
     // do anything useful yet
@@ -169,6 +172,31 @@ function handleConnection(client) {
       console.log('Websocket sending error:',err);
     }
   });
+}
+
+function checkIfOverheatedPeriodically() {
+  var isSpecificConnectionOverheated = false;
+  $tw.connections.forEach(connection => {
+    let perConnectionMessages = connection.messagesHandled || 0;
+    if (perConnectionMessages > 10 * 5) {
+      connection.socket.close(500, "Socket connection closed because the number of messages transferred exceeds the limit");
+      isSpecificConnectionOverheated = true;
+    }
+    else {
+      connection.messagesHandled = 0;
+    }
+  });
+
+  if (!isSpecificConnectionOverheated) { // checks if aggregated loading from all connections is overheat only if not a single connection is overheat
+    $tw.allMessagesHandled = $tw.allMessagesHandled || 0;
+    if ($tw.allMessagesHandled > 10 * 10 * 5) { // max: 10 active connections, over 10 seconds, 5 messages per second
+      // Closes all connections
+      $tw.connections.forEach(connection => {
+        connection.close(503, "Server connection closed because the number of messages transferred exceeds the limit");
+      })
+    }
+  }
+
 }
 
 // Only act if we are running on node. Otherwise WebSocketServer will be
