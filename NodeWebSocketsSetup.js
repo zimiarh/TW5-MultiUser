@@ -36,8 +36,8 @@ var setup = function () {
   $tw.nodeMessageHandlers = $tw.nodeMessageHandlers || {};
   // Initialise connections array
   $tw.connections = [];
-  setInterval(checkIfOverheatedPeriodically, 10000); // Check if the server is overheated every 10 seconds
-  
+  setupOverheatFuse();
+
   // We need to get the ip address of the node process so that we can connect
   // to the websocket server from the browser
   // This is the node ip module wrapped in a tiddler so it can be packaged with
@@ -136,11 +136,15 @@ var setup = function () {
 */
 function handleConnection(client) {
   console.log("new connection");
-  $tw.connections.push({'socket':client, 'active': true});
+  $tw.connections.push({'socket':client, 'active': true, 'messagesHandled': 0});
   client.on('message', function incoming(event) {
+    $tw.allMessagesHandled = ($tw.allMessagesHandled + 1) || 1;
+
     var self = this;
     // Determine which connection the message came from
     var thisIndex = $tw.connections.findIndex(function(connection) {return connection.socket === self;});
+    $tw.connections[thisIndex].messagesHandled = ($tw.connections[thisIndex].messagesHandled + 1) || 1;
+
     try {
       var eventData = JSON.parse(event);
       // Add the source to the eventData object so it can be used later.
@@ -172,6 +176,11 @@ function handleConnection(client) {
       console.log('Websocket sending error:',err);
     }
   });
+}
+
+function setupOverheatFuse() {
+  $tw.allMessagesHandled = 0;
+  setInterval(checkIfOverheatedPeriodically, 10000); // Check if the server is overheated every 10 seconds
 }
 
 function checkIfOverheatedPeriodically() {
