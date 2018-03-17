@@ -190,7 +190,7 @@ function checkIfOverheatedPeriodically() {
     let perConnectionMessages = connection.messagesHandled || 0;
     if (perConnectionMessages > 10 * 5) {
       console.log("Close a socket due to connection overheat");
-      connection.socket.close(500, "Socket connection closed because the number of messages transferred exceeds the limit");
+      connection.socket.close(1001, "Socket connection closed because the number of messages transferred exceeds the limit");
       isSpecificConnectionOverheated = true;
     }
     else {
@@ -204,7 +204,7 @@ function checkIfOverheatedPeriodically() {
       // Closes all connections
       console.log("Close all sockets due to connection overheat");
       $tw.connections.forEach(connection => {
-        connection.close(503, "Server connection closed because the number of messages transferred exceeds the limit");
+        connection.close(1009, "Server connection closed because the number of messages transferred exceeds the limit");
       })
     }
   }
