@@ -88,7 +88,7 @@ socket server, but it can be extended for use with other web socket servers.
       $tw.socket = new WebSocket(`ws://${IPAddress}:${WSSPort}`);
       $tw.socket.onopen = openSocket;
       $tw.socket.onmessage = parseMessage;
-      $tw.socket.onclose = code, reason => { console.log(code + "] Server closes websocket: " + reason); };
+      $tw.socket.onclose = (code, reason) => { console.log(code + "] Server closes websocket: " + reason); };
       $tw.socket.binaryType = "arraybuffer";
 
       addHooks();

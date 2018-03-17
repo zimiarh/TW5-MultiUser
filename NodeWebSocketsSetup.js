@@ -138,12 +138,12 @@ function handleConnection(client) {
   console.log("new connection");
   $tw.connections.push({'socket':client, 'active': true, 'messagesHandled': 0});
   client.on('message', function incoming(event) {
-    $tw.allMessagesHandled = ($tw.allMessagesHandled + 1) || 1;
+    $tw.allMessagesHandled = ($tw.allMessagesHandled || 0) + 1;
 
     var self = this;
     // Determine which connection the message came from
     var thisIndex = $tw.connections.findIndex(function(connection) {return connection.socket === self;});
-    $tw.connections[thisIndex].messagesHandled = ($tw.connections[thisIndex].messagesHandled + 1) || 1;
+    $tw.connections[thisIndex].messagesHandled = ($tw.connections[thisIndex].messagesHandled || 0) + 1;
 
     try {
       var eventData = JSON.parse(event);
@@ -186,7 +186,6 @@ function setupOverheatFuse() {
 function checkIfOverheatedPeriodically() {
   console.log("Check for overheat...");
   let isSpecificConnectionOverheated = false;
-  let passedConnections = [];
 
   $tw.connections.forEach(connection => {
     let perConnectionMessages = connection.messagesHandled || 0;
@@ -195,13 +194,9 @@ function checkIfOverheatedPeriodically() {
       connection.socket.close(1001, "Socket connection closed because the number of messages transferred exceeds the limit");
       isSpecificConnectionOverheated = true;
     }
-    else {
-      connection.messagesHandled = 0;
-      passedConnections.push(connection);
-    }
+    
+    connection.messagesHandled = 0;
   });
-
-  $tw.connections = passedConnections;
 
   if (!isSpecificConnectionOverheated) { // checks if aggregated loading from all connections is overheat only if not a single connection is overheat
     $tw.allMessagesHandled = $tw.allMessagesHandled || 0;
@@ -211,12 +206,9 @@ function checkIfOverheatedPeriodically() {
       $tw.connections.forEach(connection => {
         connection.close(1009, "Server connection closed because the number of messages transferred exceeds the limit");
       })
+    }
 
-      $tw.connections = [];
-    }
-    else {
-      $tw.allMessagesHandled = 0;
-    }
+    $tw.allMessagesHandled = 0;
   }
 
 }
