@@ -140,7 +140,7 @@ it will overwrite this file.
     // check to see if the field values are the same, ignore modified for now
     allFields.forEach(function(field) {
       if (field !== 'modified' && field !== 'created' && field !== 'list' && field !== 'tags') {
-        if (!otherTiddler.fields[field] || otherTiddler.fields[field] !== tiddler.fields[field]) {
+        if (otherTiddler.fields[field] !== tiddler.fields[field]) {
           // There is a difference!
           changed = true;
         }
