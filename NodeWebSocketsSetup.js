@@ -189,6 +189,9 @@ function tryCheckIfOverheatedPeriodically() {
   if (!overheatSettings.is_enabled || overheatSettings.is_enabled !== "false") {
     checkIfOverheated();
   }
+  else {
+    console.log("Overheat check ignored.");
+  }
 
   scheduleOverheatCheck(parseInt(overheatSettings.interval));
 }
@@ -227,7 +230,6 @@ function createDefaulOverheatSetting() {
 }
 
 function checkIfOverheated() {
-  console.log("Check for overheat...");
   let isSpecificConnectionOverheated = false;
 
   $tw.connections.forEach(connection => {
