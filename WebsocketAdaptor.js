@@ -172,12 +172,14 @@ WebsocketAdaptor.prototype.saveTiddler = function(tiddler,callback) {
       if(fileInfo.hasMetaFile) {
         // Save the tiddler as a separate body and meta file
         var typeInfo = $tw.config.contentTypeInfo[tiddler.fields.type || "text/plain"] || {encoding: "utf8"};
-        fs.writeFile(filepath,tiddler.fields.text,{encoding: typeInfo.encoding},function(err) {
+
+        var content = makeTiddlerFile(tiddler);
+        fs.writeFile(fileInfo.filepath + ".meta",content,{encoding: "utf8"},function (err) {
           if(err) {
             return callback(err);
           }
-          var content = makeTiddlerFile(tiddler);
-          fs.writeFile(fileInfo.filepath + ".meta",content,{encoding: "utf8"},function (err) {
+          
+          fs.writeFile(filepath,tiddler.fields.text,{encoding: typeInfo.encoding},function(err) {  
             if(err) {
               return callback(err);
             }
