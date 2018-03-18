@@ -186,7 +186,7 @@ function setupOverheatFuse() {
 function tryCheckIfOverheatedPeriodically() {
   let overheatSettings = loadOverheatSetting();
 
-  if (!overheatSettings.isEnabled || overheatSettings.isEnabled !== "false") {
+  if (!overheatSettings.is_enabled || overheatSettings.is_enabled !== "false") {
     checkIfOverheated();
   }
 
@@ -222,7 +222,7 @@ function tryLoadGloabalOverheatSettingIntoLocal() {
 function createDefaulOverheatSetting() {
   return {
     interval: "10000",
-    isEnabled: "true"
+    is_enabled: "true"
   };
 }
 
