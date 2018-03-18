@@ -184,29 +184,46 @@ function setupOverheatFuse() {
 }
 
 function tryCheckIfOverheatedPeriodically() {
-  let overheatSetting = $tw.wiki.getTiddler("$:/WikiSettings/split/overheat");
-  if (!overheatSetting) {
-    overheatSetting = {
-      title: "$:/WikiSettings/split/overheat",
-      fields: {
-        interval: 10000,
-        isEnabled: true
-      }
-    };
+  let overheatSettings = loadOverheatSetting();
 
-    let serverSetting = $tw.wiki.getTiddler("$:/WikiSettings/splits");
-    let isServerSettingReady = serverSetting !== null && serverSetting !== undefined;
-
-    if (isServerSettingReady) { // Server setting loaded, but overheatSetting not found. We should add a default one
-      $tw.wiki.addTiddler(new $tw.Tiddler(overheatSetting));
-    }
-  }
-
-  if (overheatSetting.fields['isEnabled']) {
+  if (!overheatSettings.isEnabled || overheatSettings.isEnabled !== "false") {
     checkIfOverheated();
   }
 
-  scheduleOverheatCheck(overheatSetting.fields['interval']);
+  scheduleOverheatCheck(parseInt(overheatSettings.interval));
+}
+
+function loadOverheatSetting() {
+  tryLoadGloabalOverheatSettingIntoLocal();
+  return $tw.wiki.getTiddler("$:/WikiSettings/split/overheat").fields;
+}
+
+function tryLoadGloabalOverheatSettingIntoLocal() {
+  if (!$tw.wiki.tiddlerExists("$:/state/WikiSettings/global_overheat_loaded")) {
+    
+    let overheatSettings = null;
+
+    if ($tw.wiki.tiddlerExists("$:/WikiSettings")) {
+      let wikiSettings = JSON.parse($tw.wiki.getTiddler("$:/WikiSettings").fields.text);
+      overheatSettings = wikiSettings['overheat'] || createDefaulOverheatSetting();
+  
+      overheatSettings['title'] = "$:/WikiSettings/split/overheat";
+      
+      $tw.wiki.addTiddler(new $tw.Tiddler({title: "$:/state/WikiSettings/global_overheat_loaded"}));
+    }
+    else {
+      overheatSettings = createDefaulOverheatSetting();
+    }
+
+    $tw.wiki.addTiddler(new $tw.Tiddler(overheatSettings));
+  }
+}
+
+function createDefaulOverheatSetting() {
+  return {
+    interval: "10000",
+    isEnabled: "true"
+  };
 }
 
 function checkIfOverheated() {
