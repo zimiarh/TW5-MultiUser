@@ -1,0 +1,19 @@
+created: 19700101000000000
+title: $:/zimiarh/ui/Buttons/remove-protect
+tags: $:/tags/ViewToolbar
+modified: 20180325034756908
+description: {{$:/language/Buttons/Edit/Hint}}
+caption: {{$:/core/images/edit-button}} {{$:/language/Buttons/Edit/Caption}}
+
+<$list filter='[all[current]listed[]field:title[$:/state/MultiUser/EditingTiddlers]]'
+emptyMessage="" variable="dummy">
+<$button tooltip="Remove Protect" aria-label="Remove Protect" class=<<tv-config-toolbar-class>>>
+<$action-websocketmessage $type="cancelEditingTiddler" data=<<currentTiddler>>/>
+<$list filter="[<tv-config-toolbar-icons>prefix[yes]]">
+{{$:/core/images/cancel-button}}
+</$list>
+<$list filter="[<tv-config-toolbar-text>prefix[yes]]">
+<span class="tc-btn-text"><$text text="Remove Protect"/></span>
+</$list>
+</$button>
+</$list>
